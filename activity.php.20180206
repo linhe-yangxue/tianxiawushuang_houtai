@@ -1,0 +1,121 @@
+<!doctype html>
+<?php
+include "top.php";
+include "config.php";
+?>
+
+<div class="container clearfix">
+    <?php 
+	 include "memu.php"
+	?>
+    <!--/sidebar-->
+    <div class="main-wrap">
+
+        <div class="crumb-wrap">
+            <div class="crumb-list"><i class="icon-font"></i><a href="/jscss/admin">首页</a><span class="crumb-step">&gt;</span><span class="crumb-name">活动管理</span></div>
+        </div>
+
+        <div class="result-wrap">
+
+                <div class="result-title">
+                    <form action="/activity.php" method="get">
+                        请选择服务器：
+                        <select class="form-control" id="dbindex" name='dbindex'>
+                            <option value = 'chuanqi_qingbiao' <?php if( (!isset($_GET['dbindex'])) || (isset($_GET['dbindex']) && ($_GET['dbindex'] =='chuanqi_qingbiao' )) ){ ?> selected="selected" <?php } ?>>S1</option>
+                            <option value = 'chuanqi_shacheng2' <?php if( isset($_GET['dbindex']) && ($_GET['dbindex'] == 'chuanqi_shacheng2')){ ?> selected="selected" <?php } ?>>S2</option>
+
+                            <?php
+                            $conn = mysql_connect($config["DB_HOST"], $config["DB_USER"], $config["DB_PWD"]);
+                            mysql_query("set names 'utf8'");
+                            if (!$conn) {
+                                die("连接数据库失败，请配置好config.php文件！！！");
+                            }
+                            $dbsql = "show databases like 'chuanqi_rexue%'";
+                            $result = mysql_query($dbsql, $conn);
+                            $i = 1;
+                            while ($row = mysql_fetch_array($result)) {
+//                                if (!isset($_GET['dbindex']) && $i == 1) {
+//                                    echo "<OPTION value='" . $row[0] . "' selected >" . $row[0] . "</OPTION>";
+//                                } else {
+//                                    if ($row[0] == $_GET['dbindex']) {
+//                                        echo "<OPTION value='" . $row[0] . "' selected>" . $row[0] . "</OPTION>";
+//                                    } else {
+//                                        echo "<OPTION value='" . $row[0] . "'>" . $row[0] . "</OPTION>";
+//                                    }
+//                                }
+                                if ($row[0] == $_GET['dbindex']) {
+                                    echo "<OPTION value='" . $row[0] . "' selected>" . $row[0] . "</OPTION>";
+                                } else {
+                                    echo "<OPTION value='" . $row[0] . "'>" . $row[0] . "</OPTION>";
+                                }
+                                $i++;
+                            }
+                            ?></select>
+                        &nbsp;关键字：<input type="text" id="keyword" name="keyword" style="width: 100px" value="<?php echo isset($_GET['keyword'])?trim($_GET['keyword']) : ""; ?>">&nbsp;<input type="submit" value = "查 询">（活动名称）
+                    </form>
+                </div>
+                <div class="result-content">
+                    <table class="result-tab" width="100%">
+                        <tr>
+                            <th>活动ID</th>
+                            <th>标题</th>
+                            <th>类型</th>
+                            <th>开始时间</th>
+                            <th>结束时间</th>
+			    <th>物品</th>
+			    <th>是否开启</th>
+                            <th>操作</th>
+                        </tr>
+                        <?php
+                            if (isset($_GET['dbindex']) && strlen($_GET['dbindex']) > 1) {
+                                $role_db = $_GET['dbindex'];
+                            } else {
+                                $role_db = "chuanqi_qingbiao";//默认的老库
+                            }
+                            $db_select = mysql_select_db($role_db);
+                            if(!$db_select){
+                                die("连接数据库".$role_db."失败！请填写好数据库名~~~~");
+                            }
+
+                            $sql = "select * from uw_activity order by id desc";
+                            if(isset($_GET['keyword'])) {
+                                $keyword = addslashes(trim($_GET['keyword']));
+                                if(strlen($keyword) > 0){
+                                    $sql = "select * from uw_activity where title like '%".$keyword."%' order by id desc";
+                                }
+                            }
+                            $result = mysql_query($sql,$conn);
+                            while($row = mysql_fetch_array($result))
+ 
+                                {
+ 
+                         ?>
+
+                        <tr>
+                            <td id="aid" name="aid"><?php echo $row['id'];?></td>
+                            <td id="atitle" name="atitle"><?php echo $row['title'];?></td>
+                            <td id="atype" name="atype"><?php echo $row['type'];?></td>
+                            <td id="astarttime" name="astarttime"><?php echo $row['startTime'];?></td>
+			    <td id="aendtime" name="aendtime"><?php echo $row['endTime'];?></td>
+                            <td id="aitems" name="aitems" style="width:100px"><?php echo $row['items'];?></td>
+                            <td id="aisOpen" name="aisOpen"><?php echo $row['isOpen'];?></td>
+                            <td>
+				<a class="link-update" href="xgact.php?roledb=<?php echo $role_db;?>&aid=<?php echo $row['id'];?>">修改时间</a>
+                            </td>
+                        </tr> 
+                         <?php
+                                }
+                        ?>
+                        <?php
+                        @mysql_close($conn);
+                        ?>
+                    </table>
+                    <div class="list-page"> 1/1 页</div>
+                </div>
+
+        </div>
+    </div>
+    <!--/main-->
+</div>
+</body>
+</html>

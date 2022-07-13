@@ -1,0 +1,152 @@
+<!doctype html>
+<?php
+include "top.php";
+include "config.php";
+?>
+
+<div class="container clearfix">
+    <?php 
+	 include "memu.php"
+	?>
+    <!--/sidebar-->
+    <div class="main-wrap">
+
+        <div class="crumb-wrap">
+            <div class="crumb-list"><i class="icon-font"></i><a href="/jscss/admin">首页</a><span class="crumb-step">&gt;</span><span class="crumb-name">角色管理</span></div>
+        </div>
+
+        <div class="result-wrap">
+
+                <div class="result-title">
+                    <form action="/role.php" method="get">
+                        请选择服务器：
+                        <select class="form-control" id="dbindex" name='dbindex'>
+<option value = '0' <?php if( !isset($_GET['dbindex']) || strlen($_GET['dbindex']) < 1 ){ ?> selected="selected" <?php } ?>>请选服查询</option>
+
+                            <?php
+                            $conn = mysql_connect($config["DB_HOST"], $config["DB_USER"], $config["DB_PWD"]);
+                            mysql_query("set names 'utf8'");
+                            if (!$conn) {
+                                die("连接数据库失败，请配置好config.php文件！！！");
+                            }
+                            $dbsql = "show databases like 'chuanqi_rexue%'";
+                            $result = mysql_query($dbsql, $conn);
+                            $i = 1;
+                            while ($row = mysql_fetch_array($result)) {
+//                                if (!isset($_GET['dbindex']) && $i == 1) {
+//                                    echo "<OPTION value='" . $row[0] . "' selected >" . $row[0] . "</OPTION>";
+//                                } else {
+//                                    if ($row[0] == $_GET['dbindex']) {
+//                                        echo "<OPTION value='" . $row[0] . "' selected>" . $row[0] . "</OPTION>";
+//                                    } else {
+//                                        echo "<OPTION value='" . $row[0] . "'>" . $row[0] . "</OPTION>";
+//                                    }
+//                                }
+                                if ($row[0] == $_GET['dbindex']) {
+                                    echo "<OPTION value='" . $row[0] . "' selected>" . $row[0] . "</OPTION>";
+                                } else {
+                                    echo "<OPTION value='" . $row[0] . "'>" . $row[0] . "</OPTION>";
+                                }
+                                $i++;
+                            }
+                        ?>
+                        </select>
+                        <select class="form-control" id="selVip" name='selVip'>
+                            <option value = '0' <?php if( isset($_GET['selVip']) && ($_GET['selVip'] == '0')){ ?> selected="selected" <?php } ?>>所有玩家</option>
+                            <option value = '1' <?php if( isset($_GET['selVip']) && ($_GET['selVip'] == '1')){ ?> selected="selected" <?php } ?>>付费玩家</option>
+                        </select>
+                        &nbsp;关键字：<input type="text" id="keyword" name="keyword" style="width: 100px" value="<?php echo isset($_GET['keyword'])?trim($_GET['keyword']) : ""; ?>">&nbsp;<input type="submit" value = "查 询">（账号ID/角色ID/角色名）
+                    </form>
+                </div>
+                <div class="result-content">
+                    <table class="result-tab" width="100%">
+                        <tr>
+                            <th>账号ID</th>
+                            <th>角色ID</th>
+                            <th>角色名</th>
+                            <th>金币</th>
+                            <th>元宝</th>
+							<th>等级</th>
+							<th>VIP等级</th>
+							<th>VIP积分</th>
+							<th>转生等级</th>
+							<th>创建时间</th>
+							<th>最后更新时间</th>
+                            <th>操作</th>
+                        </tr>
+                        <?php 
+
+                        if (isset($_GET['dbindex']) && strlen($_GET['dbindex']) > 1) {
+                            $role_db = $_GET['dbindex'];
+                        } else {
+                            $role_db = "chuanqi_rexue1";//默认的老库
+@mysql_close($conn);
+exit("<span style='color:red'>请先选择对应服务器，然后再查找角色</span>");
+                        }
+
+                            $db_select = mysql_select_db($role_db);
+                            if(!$db_select){
+                                die("连接数据库".$role_db."失败！请填写好数据库名~~~~");
+                            }
+
+                            $sql = "select * from uw_user where accountId > 0";
+                            $sql_count = "select count(*) as num from uw_user where accountId > 0";
+                            if(isset($_GET['selVip']) && intval($_GET['selVip']) > 0)
+                            {
+                                $sql .= " and vip > 10";
+                                $sql_count .= " and vip > 10";
+                            }
+
+                            if(isset($_GET['keyword'])) {
+                                $keyword = addslashes(trim($_GET['keyword']));
+                                if(strlen($keyword) > 0){
+                                    $sql .= " and concat(accountId,id,nickName) like '%".$keyword."%'";
+                                    $sql_count = "and concat(accountId,id,nickName) like '%".$keyword."%'";
+                                }
+                            }
+                            $sql .= " order by lvl desc";
+                            $sql_count .= " order by lvl desc";
+                            $result_count = mysql_query($sql_count,$conn);
+			                $row_count = mysql_fetch_array($result_count);
+				        ?>
+				        <tr><td colspan = '14' align='center'>共计 <?php echo $row_count[0]; ?> 角色</td></tr>
+				        <?php
+                            $result = mysql_query($sql,$conn);
+                            while($row = mysql_fetch_array($result))
+                            {
+                         ?>
+                        <tr>
+                            <td id="accountId" name="accountId"><?php echo $row['accountId'];?></td>
+                            <td id="uid" name="uid"><?php echo $row['id'];?></td>
+                            <td id="nickName" name="nickName"><?php echo $row['nickName'];?></td>
+                            <td id="gold" name="gold"><?php echo $row['gold'];?></td>
+                            <td id="diamond" name="diamond"><?php echo $row['diamond'];?></td>
+							<td id="lvl" name="lvl"><?php echo $row['lvl'];?></td>
+                            <td id="vip" name="vip"><?php echo $row['vip'];?></td>
+                            <td id="vipScore" name="vipScore"><?php echo $row['vipScore'];?></td>
+                            <td id="rebirthLvl" name="rebirthLvl"><?php echo $row['rebirthLvl'];?></td>
+                            <td id="cret" name="cret"><?php echo $row['createTime'];?></td>
+                            <td id="las" name="las"><?php echo $row['lastUpdateTime'];?></td>
+                            <td>
+                            <a class="link-update" href="chongzhiGM2.php?roledb=<?php echo $role_db;?>&PlatformUID=<?php echo $row['id'];?>&name=<?php echo $row['nickName'];?>&accid=<?php echo $row['accountId'];?>">充值</a>
+                            <a class="link-update" href="gm2.php?roledb=<?php echo $role_db;?>&PlatformUID=<?php echo $row['id'];?>&name=<?php echo $row['nickName'];?>&accid=<?php echo $row['accountId'];?>">邮件</a>
+			    <a class="link-update" href="xg2.php?roledb=<?php echo $role_db;?>&PlatformUID=<?php echo $row['id'];?>&name=<?php echo $row['nickName'];?>&accid=<?php echo $row['accountId'];?>">管理</a>
+                            <a class="link-update" href="banuser.php?PlatformUID=<?php echo $row['id'];?>&name=<?php echo $row['nickName'];?>&accid=<?php echo $row['accountId'];?>">[封号/禁言]</a>
+                            </td>
+                        </tr> 
+                         <?php
+                                }
+                        ?>
+                        <?php
+                            @mysql_close($conn);
+                        ?>
+                    </table>
+                    <div class="list-page"> 1/1 页</div>
+                </div>
+
+        </div>
+    </div>
+    <!--/main-->
+</div>
+</body>
+</html>
